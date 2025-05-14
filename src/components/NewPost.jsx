@@ -98,7 +98,6 @@ function NewPost({parent}) {
             >
                 Post
             </button>
-            
         </form>
 
     )
