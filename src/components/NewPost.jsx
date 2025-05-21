@@ -3,10 +3,9 @@ import { useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 
 
-function NewPost({parent}) {
-    console.log(parent);
+function NewPost({parentId}) {
     const [image, setImage] = useState(null);
-    const [content, setContent] = useState("");
+    const [text, setText] = useState(""); // Changed from content to text to match schema
 
     const [loading, setLoading] = useState(false);
 
@@ -18,39 +17,60 @@ function NewPost({parent}) {
     const handleSubmit = (e) => {
         e.preventDefault();
         const formData = new FormData();
-
+        const headers = {}; // Initialize headers object
         setLoading(true);
 
-        if (content != null) {
-            formData.append(
-                "content",
-                content
-            )
+        // Add the parent_id for replies
+        if (parentId) {
+            formData.append("parent_id", parentId);
+            console.log("Adding parent_id:", parentId);
         }
 
-        if (parent != null) {
-            formData.append(
-                "parent_id",
-                parent
-            )
+        if (text) {
+            formData.append("text", text);
         }
 
-        if (image != null) {
-            formData.append(
-                "file",
-                image
-            )
+        if (image) {
+            formData.append("file", image);
         }
 
-        console.log(formData);
-        axios.post("/post/new", formData)
+        // Add topic if available
+        const topic = localStorage.getItem('currentTopic');
+        if (topic) {
+            formData.append("topic", topic.toLowerCase());
+        }
+
+        // Handle auth and owner
+        const user = localStorage.getItem("user");
+        if (user) {
+            const userData = JSON.parse(user);
+            // Only append owner if not anonymous
+            if (!userData.isAnonymous) {
+                formData.append("owner", userData.id);
+            }
+            if (userData.token) {
+                headers.Authorization = `Bearer ${userData.token}`;
+            }
+        }
+
+        // Debug logs
+        console.log("Headers:", headers);
+        console.log("Form data entries:");
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
+        }
+
+        axios.post('/post/new', formData, { headers })
             .then(response => {
+                console.log("Post created:", response.data);
+                setLoading(false);
                 location.reload();
             })
             .catch(error => {
+                console.error("Error creating post:", error.response?.data || error);
+                alert("Failed to create post: " + (error.response?.data?.message || error.message));
                 setLoading(false);
-            })
-        
+            });
     }
 
 
@@ -72,7 +92,8 @@ function NewPost({parent}) {
                     bg-green-200
                 "
                 type="text" 
-                onChange={({target}) => setContent(target.value)}
+                onChange={({target}) => setText(target.value)} // Changed from setContent to setText
+                value={text}
             />
             <input 
                 className="

@@ -15,16 +15,23 @@ function Navbar() {
         }));
     };
 
+    const handleTopicClick = (topic) => {
+        localStorage.setItem('currentTopic', topic.toLowerCase());
+        // You can add additional logic here to filter posts
+    };
+
     return (
         <nav className="flex flex-col items-center bg-green-500 p-2 sticky top-0 z-10">
             <ul className="flex flex-row space-x-4">
-                <li className="text-white hover:text-gray-200 cursor-pointer">Technology</li>
-                <li className="text-white hover:text-gray-200 cursor-pointer">Humour</li>
-                <li className="text-white hover:text-gray-200 cursor-pointer">Science</li>
-                <li className="text-white hover:text-gray-200 cursor-pointer">Music</li>
-                <li className="text-white hover:text-gray-200 cursor-pointer">Art</li>
-                <li className="text-white hover:text-gray-200 cursor-pointer">Movie</li>
-                <li className="text-white hover:text-gray-200 cursor-pointer">Place</li>
+                {['Technology', 'Humor', 'Science', 'Music', 'Art', 'Movie', 'Place'].map(topic => (
+                    <li 
+                        key={topic}
+                        onClick={() => handleTopicClick(topic)}
+                        className="text-white hover:text-gray-200 cursor-pointer"
+                    >
+                        {topic}
+                    </li>
+                ))}
             </ul>
             <div className="flex row">
                 <Popup trigger={<button className="bg-green-200 m-2 p-2 cursor-pointer flex justify-center">
