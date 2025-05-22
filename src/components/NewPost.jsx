@@ -1,6 +1,5 @@
 import axios from "axios";
 import { useState } from "react";
-import ReCAPTCHA from "react-google-recaptcha";
 
 
 function NewPost({parentId}) {
@@ -14,63 +13,45 @@ function NewPost({parentId}) {
         setImage(event.target.files[0]);
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData();
-        const headers = {}; // Initialize headers object
         setLoading(true);
 
-        // Add the parent_id for replies
-        if (parentId) {
-            formData.append("parent_id", parentId);
-            console.log("Adding parent_id:", parentId);
+        // Required fields
+        if (text) formData.append("text", text);
+        if (image) formData.append("file", image);
+        if (parentId) formData.append("parent_id", parentId);
+
+        // Get user from localStorage
+        const userJson = localStorage.getItem("user");
+        const user = userJson ? JSON.parse(userJson) : null;
+        
+        // Add authentication header if user exists
+        const headers = {};
+        if (user?.token) {
+            headers.Authorization = `Bearer ${user.token}`;
+            formData.append("owner", user.id);
         }
 
-        if (text) {
-            formData.append("text", text);
+        // Add forum if exists
+        const currentForum = localStorage.getItem('currentForum');
+        if (currentForum) {
+            formData.append("forum", currentForum);
         }
 
-        if (image) {
-            formData.append("file", image);
-        }
-
-        // Add topic if available
-        const topic = localStorage.getItem('currentTopic');
-        if (topic) {
-            formData.append("topic", topic.toLowerCase());
-        }
-
-        // Handle auth and owner
-        const user = localStorage.getItem("user");
-        if (user) {
-            const userData = JSON.parse(user);
-            // Only append owner if not anonymous
-            if (!userData.isAnonymous) {
-                formData.append("owner", userData.id);
-            }
-            if (userData.token) {
-                headers.Authorization = `Bearer ${userData.token}`;
-            }
-        }
-
-        // Debug logs
-        console.log("Headers:", headers);
-        console.log("Form data entries:");
-        for (let pair of formData.entries()) {
-            console.log(pair[0] + ': ' + pair[1]);
-        }
-
-        axios.post('/post/new', formData, { headers })
-            .then(response => {
-                console.log("Post created:", response.data);
-                setLoading(false);
-                location.reload();
-            })
-            .catch(error => {
-                console.error("Error creating post:", error.response?.data || error);
-                alert("Failed to create post: " + (error.response?.data?.message || error.message));
-                setLoading(false);
+        try {
+            await axios.post('/post', formData, { 
+                headers,
+                withCredentials: true 
             });
+            setLoading(false);
+            window.location.reload();
+        } catch (error) {
+            console.error("Error creating post:", error);
+            alert(error.response?.data?.message || "Failed to create post");
+            setLoading(false);
+        }
     }
 
 

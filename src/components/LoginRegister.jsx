@@ -1,16 +1,31 @@
 import { useState } from 'react';
+import axios from 'axios';
 
 function LoginRegister() {
     const [isLogin, setIsLogin] = useState(true);
     const [formData, setFormData] = useState({
         username: '',
         password: '',
-        confirmPassword: ''
     });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Add your authentication logic here
+        try {
+            const endpoint = isLogin ? '/user/login' : '/user/register';
+            const response = await axios.post(endpoint, formData);
+            
+            const { user, token } = response.data.payload;
+            localStorage.setItem('user', JSON.stringify({
+                id: user._id,
+                username: user.username,
+                role: user.roles,
+                token
+            }));
+            
+            window.location.reload();
+        } catch (error) {
+            alert(error.response?.data?.message || "Authentication failed");
+        }
     };
 
     return (
