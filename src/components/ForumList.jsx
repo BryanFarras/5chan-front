@@ -12,7 +12,7 @@ function ForumList() {
             let response;
             
             if (user?.id) {
-                response = await axios.get(`/forum/user/${user.id}`);
+                response = await axios.get('/forum');
             } else {
                 response = await axios.get('/forum');
             }
